@@ -1,0 +1,141 @@
+.xmark {
+  width: 50px;
+  height: 50px;
+  background: #000;
+  cursor: pointer;
+  transform: translate(0, 50%);
+
+  transition: 0.3s all ease;
+}
+.xmark::before,
+.xmark::after {
+  position: absolute;
+  display: block;
+  content: "";
+  width: 40px;
+  height: 4px;
+  background: #fff;
+}
+.xmark::before {
+  transform: rotate(45deg);
+}
+.xmark::after {
+  transform: rotate(-45deg);
+}
+
+.menu {
+  z-index: 100;
+  position: fixed;
+
+  height: 100vh;
+  color: #fff;
+  padding: 0 0 0 15px;
+
+  transition: 0.3s all ease;
+  transform: translate(-100%, 0);
+
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.equals {
+  z-index: 100;
+  position: fixed;
+  width: 50px;
+  height: 50px;
+  background: #000;
+  cursor: pointer;
+  transform: translate(-100%, 0);
+  margin: 0 0 0 15px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activeMark {
+  transform: translate(0, 25%);
+}
+
+.activeMenu {
+  transform: translate(0, 0);
+}
+
+.stick,
+.equals::before,
+.equals::after {
+  display: block;
+  content: "";
+  width: 40px;
+  height: 3px;
+  background: #fff;
+}
+
+.options {
+  font-size: 2rem;
+}
+
+.options > div {
+  width: fit-content;
+  cursor: pointer;
+}
+.options > div:hover {
+  text-shadow: 1px 1px 2px pink;
+}
+
+.audio-settings {
+  font-size: 1.5rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.audio-settings > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.audio-settings > div > input {
+  width: 50%;
+  font-size: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.question {
+  position: relative;
+}
+
+.mark {
+  padding: 0px 10px;
+  border-radius: 50%;
+  border: 1px solid rgb(125, 23, 23);
+  font-weight: 600;
+  transition: 0.3s all ease;
+
+  cursor: pointer;
+  color: rgb(125, 23, 23);
+}
+
+.mark:hover {
+  color: rgb(23, 125, 23);
+  border: 1px solid rgb(23, 125, 23);
+}
+
+.question:hover > .hint {
+  display: block;
+}
+
+.hint {
+  position: absolute;
+  display: none;
+  width: 300px;
+  font-size: 1.25rem;
+  background-color: #000;
+  border: 1px solid #fff;
+  transform: translate(0, -100%);
+}
