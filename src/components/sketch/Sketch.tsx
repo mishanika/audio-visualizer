@@ -27,6 +27,8 @@ type Props = {
     middle: number;
     high: number;
   };
+  ended: boolean;
+  uploaderOpen: boolean;
 };
 
 const P5Sketch: React.FC<Props> = ({
@@ -36,6 +38,8 @@ const P5Sketch: React.FC<Props> = ({
   readyState,
   isSongChangedRef,
   settings,
+  ended,
+  uploaderOpen,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const analyserRef = useRef<{ preloaded: AnalyserNode; stream: AnalyserNode } | { preloaded: null; stream: null }>({
@@ -71,7 +75,10 @@ const P5Sketch: React.FC<Props> = ({
     middle: 0,
     high: 0,
   });
-  // const [analyserNode, setAnalyserNode] = useState<AnalyserNode>();
+  const stoppedRef = useRef(false);
+  const endedRef = useRef(false);
+  const uploaderRef = useRef(false);
+  const [stopped, setStopped] = useState(false);
 
   const fromRangeToRange = (number: number, to: number, secondTo: number) => {
     return Math.floor((number / to) * secondTo);
@@ -86,7 +93,6 @@ const P5Sketch: React.FC<Props> = ({
     if (audioRef.current && audioStreamRef.current && canvasRef.current) {
       audio.current!.preloaded = new AudioContext();
       audio.current!.stream = new AudioContext();
-
       if (menuOption.stream) {
         streamRef.current!.stream = audioStreamRef.current.srcObject as MediaStream;
 
@@ -113,48 +119,33 @@ const P5Sketch: React.FC<Props> = ({
 
       const centerX = canvasRef.current.width / 2;
       const centerY = canvasRef.current.height / 2;
-      // const radius = settingsRef.current.radius;
-      // const numPointsWaves = settingsRef.current.dots;
+
       const numPointsDots = 5;
 
       const pointRadius = 1;
 
       const drawWaves = () => {
         const angleIncrement = (2 * Math.PI) / settingsRef.current.dots; // угол между точками
-        // if (isSongChangedRef.current.waves && analyserRef.current) {
-        //   if (menuOptionRef.current.stream && audioRef.current) {
-        //     // audioRef.current.pause();
 
-        //     // analyserRef.current.connect(audio.current!.destination);
-        //     // sourceRef.current!.disconnect(audio.current!.destination);
-        //     streamRef.current = audioRef.current.srcObject as MediaStream;
-        //     sourceRef.current = audio.current!.createMediaStreamSource(streamRef.current);
-        //     // stream = audioRef.current.srcObject as MediaStream;
-        //     // source = audio.createMediaStreamSource(stream);
-        //     // analyser = audio.createAnalyser();
-        //   } else if (!menuOptionRef.current.stream && audioRef.current) {
-        //     analyserRef.current.disconnect();
-        //     // analyserRef.current = audio.current!.createAnalyser();
-        //     // sourceRef.current = audio.current!.createMediaElementSource(audioRef.current);
-
-        //     // source = audio.createMediaElementSource(audioRef.current);
-        //     // analyser = audio.createAnalyser();
-        //     analyserRef.current.connect(audio.current!.destination);
-        //     audioRef.current.play();
-        //   }
-        //   isSongChangedRef.current.waves = !isSongChangedRef.current.waves;
-
-        //   // setIsSongChanged((prev) => ({ ...prev, waves: !prev.waves }));
-        // }
-
-        if (ctx && canvasRef.current && analyserRef.current) {
+        if (stoppedRef.current && audioRef.current && !menuOptionRef.current.stream) {
+          audioRef.current.pause();
+        } else if (
+          audioRef.current &&
+          !menuOptionRef.current.stream &&
+          !endedRef.current &&
+          analyserRef.current.preloaded &&
+          !uploaderRef.current
+        ) {
+          audioRef.current.play();
+        }
+        if (ctx && canvasRef.current && analyserRef.current && !stoppedRef.current) {
           //функція яка відображає отримані дані частот на полотні canvas
           if (menuOptionRef.current.stream && analyserRef.current.stream) {
             analyserRef.current.stream.getByteFrequencyData(data);
-          } else if (menuOptionRef.current.preload && analyserRef.current.preloaded) {
+          } else if ((menuOptionRef.current.preload || menuOptionRef.current.demo) && analyserRef.current.preloaded) {
             analyserRef.current.preloaded.getByteFrequencyData(data);
           }
-          console.log(data);
+          // console.log(data);
 
           let proccessedData: number[] = [];
           for (let i = 0; i < settingsRef.current.dots / 2 + 1; i++) {
@@ -202,9 +193,8 @@ const P5Sketch: React.FC<Props> = ({
 
           ctx.strokeStyle = "white";
           ctx.stroke();
-
-          requestAnimationFrame(drawWaves);
         }
+        requestAnimationFrame(drawWaves);
       };
 
       const points: { x: number; y: number; velocity: number; angle: number }[] = [];
@@ -212,22 +202,7 @@ const P5Sketch: React.FC<Props> = ({
       const drawDots = () => {
         const angleIncrement = (2 * Math.PI) / numPointsDots;
 
-        // if (isSongChangedRef.current.dots && analyserRef.current) {
-        //   // analyserRef.current.disconnect(audio.destination);
-        //   if (menuOptionRef.current.stream && audioRef.current) {
-        //     // stream = audioRef.current.srcObject as MediaStream;
-        //     // source = audio.createMediaStreamSource(stream);
-        //     // analyser = audio.createAnalyser();
-        //   } else if (!menuOptionRef.current.stream && audioRef.current) {
-        //     // source = audio.createMediaElementSource(audioRef.current);
-        //     // analyser = audio.createAnalyser();
-        //     // analyser.connect(audio.destination);
-        //     audioRef.current.play();
-        //   }
-        //   isSongChangedRef.current.dots = !isSongChangedRef.current.dots;
-        // }
-
-        if (ctx && canvasRef.current) {
+        if (ctx && canvasRef.current && !stoppedRef.current) {
           ctx.fillStyle = "white";
           const angle = Math.random() * numPointsDots * angleIncrement;
           let bassNum = 1;
@@ -259,9 +234,8 @@ const P5Sketch: React.FC<Props> = ({
               }
             }
           }
-
-          requestAnimationFrame(drawDots);
         }
+        requestAnimationFrame(drawDots);
       };
 
       drawWaves();
@@ -278,10 +252,23 @@ const P5Sketch: React.FC<Props> = ({
   useEffect(() => {
     if (isSongChangedRef.current.waves && analyserRef.current) {
       let flag = true;
-      if (streamRef.current?.preloaded && streamRef.current?.preloaded) {
+      if (analyserRef.current.stream && analyserRef.current.preloaded) {
         flag = false;
       }
-      if (streamRef.current && flag && audioStreamRef.current!.srcObject) {
+      if (flag && audioRef.current!.src && !menuOptionRef.current.stream) {
+        if (analyserRef.current.stream) {
+          analyserRef.current.preloaded = audio.current!.preloaded!.createAnalyser();
+
+          sourceRef.current.preloaded = audio.current!.preloaded!.createMediaElementSource(audioRef.current!);
+
+          analyserRef.current.preloaded.connect(audio.current!.preloaded!.destination);
+
+          sourceRef.current.preloaded!.connect(analyserRef.current.preloaded!);
+          analyserRef.current.preloaded!.fftSize = 512;
+        }
+
+        // audioRef.current!.play();
+      } else if (audioStreamRef.current!.srcObject && menuOptionRef.current.stream) {
         streamRef.current.stream = audioStreamRef.current!.srcObject as MediaStream;
 
         sourceRef.current!.stream = audio.current!.stream!.createMediaStreamSource(streamRef.current!.stream);
@@ -289,53 +276,18 @@ const P5Sketch: React.FC<Props> = ({
         analyserRef.current.stream = audio.current!.stream!.createAnalyser();
         sourceRef.current.stream!.connect(analyserRef.current.stream!);
         analyserRef.current.stream!.fftSize = 512;
-      } else if (streamRef.current && flag && audioStreamRef.current!.src) {
-        analyserRef.current.preloaded = audio.current!.preloaded!.createAnalyser();
-
-        sourceRef.current.preloaded = audio.current!.preloaded!.createMediaElementSource(audioRef.current!);
-        if (analyserRef.current) {
-          analyserRef.current.preloaded.connect(audio.current!.preloaded!.destination);
-        }
-        sourceRef.current.preloaded!.connect(analyserRef.current.preloaded!);
-        analyserRef.current.preloaded!.fftSize = 512;
-
-        audioRef.current!.play();
       }
 
       if (menuOptionRef.current.stream && audioStreamRef.current) {
+        // stoppedRef.current = !stoppedRef.current;
         audioRef.current?.pause();
-        // if (audio.current!.destination) {
-        //   analyserRef.current.disconnect(audio.current!.destination);
-        //   sourceRef.current?.disconnect(audio.current!.destination);
-        // }
-
-        // audioRef.current.pause();
-
-        // analyserRef.current.connect(audio.current!.destination);
-        // sourceRef.current!.disconnect(audio.current!.destination);
-
-        // streamRef.current = audioStreamRef.current.srcObject as MediaStream;
-        // sourceRef.current = audio.current!.createMediaStreamSource(streamRef.current);
-        // stream = audioRef.current.srcObject as MediaStream;
-        // source = audio.createMediaStreamSource(stream);
-        // analyser = audio.createAnalyser();
       } else if (!menuOptionRef.current.stream && audioRef.current) {
-        // analyserRef.current.disconnect();
-        // analyserRef.current = audio.current!.createAnalyser();
-        // sourceRef.current = audio.current!.createMediaElementSource(audioRef.current);
-        // streamRef.current = audioRef.current.srcObject as MediaStream;
         console.log(audioRef.current.srcObject);
-
-        // sourceRef.current = audio.current!.createMediaStreamSource(streamRef.current);
-
-        // source = audio.createMediaElementSource(audioRef.current);
-        // analyser = audio.createAnalyser();
-        // analyserRef.current.connect(audio.current!.destination);
-        audioRef.current.play();
+        stoppedRef.current = false;
+        audioRef.current?.play();
       }
-      isSongChangedRef.current.waves = !isSongChangedRef.current.waves;
 
-      // setIsSongChanged((prev) => ({ ...prev, waves: !prev.waves }));
+      isSongChangedRef.current.waves = !isSongChangedRef.current.waves;
     }
   }, [menuOption]);
 
@@ -345,11 +297,30 @@ const P5Sketch: React.FC<Props> = ({
     }
   }, [menuOption]);
 
+  // useEffect(() => {
+  //   if (audioRef.current) {
+  //     if (stopped) {
+  //       audioRef.current.pause();
+  //     } else {
+  //       audioRef.current.play();
+  //     }
+  //   }
+  //   ;stoppedRef.current = !stoppedRef.current
+  // }, [stopped]);
+
   useEffect(() => {
     for (const k in settings) {
       settingsRef.current[k as keyof typeof settings] = settings[k as keyof typeof settings];
     }
   }, [settings]);
+
+  useEffect(() => {
+    endedRef.current = !endedRef.current;
+  }, [ended]);
+
+  useEffect(() => {
+    uploaderRef.current = !uploaderRef.current;
+  }, [uploaderOpen]);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -364,7 +335,14 @@ const P5Sketch: React.FC<Props> = ({
     }
   }, [readyState]);
 
-  return <canvas ref={canvasRef}></canvas>;
+  return (
+    <canvas
+      ref={canvasRef}
+      onClick={() => {
+        stoppedRef.current = !stoppedRef.current;
+      }}
+    ></canvas>
+  );
 };
 
 export default P5Sketch;

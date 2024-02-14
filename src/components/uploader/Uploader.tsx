@@ -18,6 +18,8 @@ type Props = {
       demo: boolean;
     }>
   >;
+  setUploaderOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setEnded: React.Dispatch<React.SetStateAction<boolean>>;
   isSongChangedRef: React.MutableRefObject<{
     waves: boolean;
     dots: boolean;
@@ -32,6 +34,8 @@ const Uploader: React.FC<Props> = ({
   streamRef,
   setReadyState,
   setMenuOption,
+  setUploaderOpen,
+  setEnded,
   //setIsSongChanged,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,14 +47,13 @@ const Uploader: React.FC<Props> = ({
       console.log(audioRef.current.src);
       console.log(audioRef.current.srcObject);
       setReadyState(true);
-      optionHandler("", setMenuOption, menuOption);
+      optionHandler("preload", setMenuOption, menuOption);
+      setUploaderOpen(false);
+      setEnded(false);
 
-      //if (isSongChangedRef.current.dots && isSongChangedRef.current.waves) {
       isSongChangedRef.current.dots = true;
       isSongChangedRef.current.waves = true;
       streamRef.current?.getTracks().forEach((track) => track.stop());
-      //}
-      //   setIsSongPlay((prev) => !prev);
     }
   };
 

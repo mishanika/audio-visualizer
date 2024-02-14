@@ -35,9 +35,10 @@ type Props = {
       demo: boolean;
     }>
   >;
+  setUploaderOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const Menu: React.FC<Props> = ({ menuOption, settings, setSettings, setMenuOption }) => {
+const Menu: React.FC<Props> = ({ menuOption, settings, setSettings, setMenuOption, setUploaderOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (key: string, value: number) => {
@@ -49,6 +50,13 @@ const Menu: React.FC<Props> = ({ menuOption, settings, setSettings, setMenuOptio
     }
   };
 
+  const handleMenuOption = (key: string) => {
+    if (key === "preload") {
+      setUploaderOpen(true);
+    }
+    optionHandler(key, setMenuOption, menuOption);
+  };
+
   return !isOpen ? (
     <div className={`equals ${!isOpen ? "activeMark" : ""}`} onClick={() => setIsOpen(true)}>
       <div className="stick"></div>
@@ -57,16 +65,16 @@ const Menu: React.FC<Props> = ({ menuOption, settings, setSettings, setMenuOptio
     <div className={`menu ${isOpen ? "activeMenu" : ""}`}>
       <div className={`xmark `} onClick={() => setIsOpen(false)}></div>
       <div className="options">
-        <div className="" onClick={() => optionHandler("stream", setMenuOption, menuOption)}>
+        <div className="" onClick={() => handleMenuOption("stream")}>
           {" "}
           Stream
         </div>
-        <div className="" onClick={() => optionHandler("preload", setMenuOption, menuOption)}>
+        <div className="" onClick={() => handleMenuOption("preload")}>
           Preloaded Audio
         </div>
-        <div className="" onClick={() => optionHandler("demo", setMenuOption, menuOption)}>
+        {/* <div className="" onClick={() => handleMenuOption("demo")}>
           Demo
-        </div>
+        </div> */}
       </div>
       <div className="audio-settings">
         <div className="circle-dots-quantity">
